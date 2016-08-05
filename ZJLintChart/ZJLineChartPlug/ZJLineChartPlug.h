@@ -18,16 +18,18 @@ typedef NS_ENUM(NSUInteger, ENUM_STARTLINE) {
 
 @interface ZJLineChartPlug : UIScrollView
 
-@property (nonatomic) BOOL showX;
-@property (nonatomic) BOOL showY;
-@property (nonatomic) BOOL showPointX;
-@property (nonatomic) BOOL showPointY;
+@property (nonatomic) BOOL showAsixX;       //显示X轴
+@property (nonatomic) BOOL showAsixY;       //显示Y轴
+@property (nonatomic) BOOL showPointX;      //显示X轴虚线标线
+@property (nonatomic) BOOL showPointY;      //显示Y轴虚线标线
+@property (nonatomic) BOOL showTitleX;      //显示X轴标签
+@property (nonatomic) BOOL showTitleY;      //显示Y轴标签
 
-@property (nonatomic) ENUM_STARTLINE startPoint;
+@property (nonatomic) ENUM_STARTLINE startPoint;    //设置点的起始位置
 
-@property (nonatomic, strong) NSArray *dataX;
-@property (nonatomic, strong) NSArray *dataY;
-@property (nonatomic, strong) NSArray *pointSet;
+@property (nonatomic, strong) NSArray *dataX;       //设置X轴标记数据，不从0开始 例：@[@"1",@"2"]
+@property (nonatomic, strong) NSArray *dataY;       //设置Y轴标记数据，不从0开始 例：@[@"1",@"2"]
+@property (nonatomic, strong) NSArray *pointSet;    //设置内容点坐标 例：@[@[@"1",@"1"]]
 
 @property (nonatomic, copy) ZJLineChartPlugBlock block;
 

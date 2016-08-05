@@ -9,7 +9,7 @@
 #import "ZJLineChartPlug.h"
 #import "ZJLineChartShapeLayer.h"
 
-const CGFloat offset_start_x = 80;
+const CGFloat offset_start_x = 0;
 
 #define SuberLayerNameKey @"SuberLayerNameKey"
 
@@ -33,11 +33,18 @@ const CGFloat offset_start_x = 80;
     self = [super initWithFrame:frame];
     if (self)
     {
+        self.showAsixX = YES;
+        self.showAsixY = YES;
+        self.showPointX = YES;
+        self.showPointY = YES;
+        self.showTitleX = YES;
+        self.showTitleY = YES;
+        self.backgroundColor = [UIColor colorWithRed:38 / 255.0 green:131 / 255.0 blue:72 / 255.0 alpha:1];
         [self setStartPoint:ENUM_STARTLINE_MIDDLE];
         m_StartPoint = CGPointMake(offset_start_x, frame.size.height-offset_start_x);
         CALayer *baseAxisX = [[ZJLineChartShapeLayer sharedLineChartShapeLayer]
                               drawLineWithStartPoint:m_StartPoint
-                              EndPoint:CGPointMake(frame.size.width-10, m_StartPoint.y)
+                              EndPoint:CGPointMake(frame.size.width-offset_start_x * 2, m_StartPoint.y)
                               LineWidth:1
                               LineColor:[UIColor blackColor]
                               isDotte:YES];
@@ -46,7 +53,7 @@ const CGFloat offset_start_x = 80;
         
         CALayer *baseAxisY = [[ZJLineChartShapeLayer sharedLineChartShapeLayer]
                               drawLineWithStartPoint:m_StartPoint
-                              EndPoint:CGPointMake(m_StartPoint.x, 10)
+                              EndPoint:CGPointMake(m_StartPoint.x, offset_start_x)
                               LineWidth:1
                               LineColor:[UIColor blackColor]
                               isDotte:YES];
@@ -61,6 +68,8 @@ const CGFloat offset_start_x = 80;
 - (void)setContentSize:(CGSize)contentSize
 {
     [super setContentSize:contentSize];
+    [self setShowsVerticalScrollIndicator:NO];
+    [self setShowsHorizontalScrollIndicator:NO];
     m_StartPoint = CGPointMake(offset_start_x, contentSize.height-offset_start_x);
     [[[self getSubLayerWithName:@"BaseAxis_X"] firstObject] AnimationMoveFromValue:m_StartPoint
                                                                            ToVaule:CGPointMake(contentSize.width-10, m_StartPoint.y)
@@ -70,16 +79,19 @@ const CGFloat offset_start_x = 80;
                                                                           Duration:0];
 }
 
-- (void)setShowX:(BOOL)showX
+#pragma mark - property
+- (void)setShowAsixX:(BOOL)showX
 {
+    _showAsixX = showX;
     if (!showX)
     {
         [[[self getSubLayerWithName:@"BaseAxis_X"] firstObject] removeFromSuperlayer];
     }
 }
 
-- (void)setShowY:(BOOL)showY
+- (void)setShowAsixY:(BOOL)showY
 {
+    _showAsixY = showY;
     if (!showY)
     {
         [[[self getSubLayerWithName:@"BaseAxis_Y"] firstObject] removeFromSuperlayer];
@@ -88,12 +100,52 @@ const CGFloat offset_start_x = 80;
 
 - (void)setShowPointX:(BOOL)showPointX
 {
+    _showPointX = showPointX;
     if (!showPointX)
     {
         [[self getSubLayerWithName:@"pointAxis_X"] enumerateObjectsUsingBlock:^(CALayer * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             if ([[obj valueForKey:SuberLayerNameKey] isEqualToString:@"pointAxis_X"])
             {
                 [obj removeFromSuperlayer];
+            }
+        }];
+    }
+}
+
+- (void)setShowPointY:(BOOL)showPointY
+{
+    _showPointY = showPointY;
+    if (!showPointY)
+    {
+        [[self getSubLayerWithName:@"pointAxis_Y"] enumerateObjectsUsingBlock:^(CALayer * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            [obj removeFromSuperlayer];
+        }];
+    }
+}
+
+- (void)setShowTitleX:(BOOL)showTitleX
+{
+    _showTitleX = showTitleX;
+    if (!showTitleX)
+    {
+        [self.subviews enumerateObjectsUsingBlock:^(__kindof UIView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (obj.tag >= 100 && obj.tag < 100+_dataX.count && [obj isKindOfClass:[UILabel class]])
+            {
+                [obj removeFromSuperview];
+            }
+        }];
+    }
+}
+
+- (void)setShowTitleY:(BOOL)showTitleY
+{
+    _showTitleY = showTitleY;
+    if (!showTitleY)
+    {
+        [self.subviews enumerateObjectsUsingBlock:^(__kindof UIView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if (obj.tag >= 200 && obj.tag < 200+_dataY.count && [obj isKindOfClass:[UILabel class]])
+            {
+                [obj removeFromSuperview];
             }
         }];
     }
@@ -125,16 +177,6 @@ const CGFloat offset_start_x = 80;
     }
 }
 
-- (void)setShowPointY:(BOOL)showPointY
-{
-    if (!showPointY)
-    {
-        [[self getSubLayerWithName:@"pointAxis_Y"] enumerateObjectsUsingBlock:^(CALayer * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [obj removeFromSuperlayer];
-        }];
-    }
-}
-
 - (void)setDataX:(NSArray *)dataX
 {
     _dataX = [dataX mutableCopy];
@@ -143,37 +185,49 @@ const CGFloat offset_start_x = 80;
     {
         CGRect rect = CGRectMake(m_StartPoint.x+i*m_AsixXWidht, m_StartPoint.y, m_AsixXWidht, 20);
         UILabel *lab = [[UILabel alloc] initWithFrame:rect];
+        [lab setTag:i+100];
         [lab setText:dataX[i]];
         [lab setTextAlignment:NSTextAlignmentCenter];
         [self addSubview:lab];
         
         CGPoint dataPoint = CGPointMake(CGRectGetMidX(rect)-2, CGRectGetMinY(rect)-2);
-        [self drawAxisPoint:dataPoint];
+        //        [self drawAxisPoint:dataPoint];
         [self drawAxisXLineWithStartPoint:dataPoint];
     }
+    [self setShowPointX:self.showPointX];
+    [self setShowTitleX:self.showTitleX];
 }
 
 - (void)setDataY:(NSArray *)dataY
 {
     _dataY = dataY;
+    
+    
     m_AsixYHeight = (m_StartPoint.y-10)/(dataY.count);
     for (int i = 0; i < dataY.count; i++)
     {
-        CGRect rect = CGRectMake(0, m_StartPoint.y-m_AsixYHeight-i*m_AsixYHeight,75, m_AsixYHeight);
+        CGRect rect = CGRectMake(5, m_StartPoint.y-m_AsixYHeight-i*m_AsixYHeight,75, m_AsixYHeight);
         UILabel *lab = [[UILabel alloc] initWithFrame:rect];
+        [lab setTag:i+200];
+        lab.textColor = [UIColor whiteColor];
+        lab.font = [UIFont systemFontOfSize:11];
         [lab setText:dataY[i]];
-        [lab setTextAlignment:NSTextAlignmentRight];
+        [lab setTextAlignment:NSTextAlignmentLeft];
         [self addSubview:lab];
         
-        CGPoint dataPoint = CGPointMake(CGRectGetMaxX(rect)+3, CGRectGetMidY(rect)-2);
-        [self drawAxisPoint:dataPoint];
+        CGPoint dataPoint = CGPointMake(CGRectGetMinX(rect)+3, CGRectGetMidY(rect)-2);
+        //        [self drawAxisPoint:dataPoint];
         [self drawAxisYLineWithStartPoint:dataPoint];
     }
+    [self setShowPointY:self.showPointY];
+    [self setShowTitleY:self.showTitleY];
 }
 
 - (void)setPointSet:(NSArray *)pointSet
 {
-    _pointSet = pointSet;
+    NSMutableArray *newSet = [NSMutableArray arrayWithArray:pointSet];
+    [newSet insertObject:@[@"0",@"0"] atIndex:0];
+    _pointSet = newSet;
     [self setStartPoint:self.startPoint];
     [self drawContentLine];
     [self drawContentPoint];
@@ -183,7 +237,7 @@ const CGFloat offset_start_x = 80;
     });
 }
 
-#pragma mark - Actions 
+#pragma mark - Actions
 
 - (NSArray <CALayer *> *)getSubLayerWithName:(NSString *)name
 {
@@ -208,6 +262,10 @@ const CGFloat offset_start_x = 80;
         for (int i = 0; i < self.pointSet.count; i++)
         {
             CGPoint point = CGPointMake(m_contentStartPoint.x+i*m_AsixXWidht, m_contentStartPoint.y);
+            if (i == 0)
+            {
+                point = CGPointMake(m_StartPoint.x, m_contentStartPoint.y);
+            }
             if (i+1 < self.pointSet.count)
             {
                 CGPoint nextpoint = CGPointMake(m_contentStartPoint.x+(i+1) *m_AsixXWidht, m_contentStartPoint.y);
@@ -228,18 +286,25 @@ const CGFloat offset_start_x = 80;
         for (int i = 0; i < self.pointSet.count; i++)
         {
             NSArray *content = self.pointSet[i];
-            CGPoint point = CGPointMake(m_contentStartPoint.x+([[content firstObject] floatValue]-1)*m_AsixXWidht,
-                                        start_Y-([[content lastObject] floatValue]-1)*m_AsixYHeight);
+            CGFloat asixX = [[content firstObject] floatValue]/[[_dataX firstObject] floatValue] - 1;
+            CGFloat asixY = [[content lastObject] floatValue]/[[_dataY firstObject] floatValue] - 1;
+            CGPoint point = CGPointMake(m_contentStartPoint.x+asixX*m_AsixXWidht,start_Y-asixY*m_AsixYHeight);
+            if (i == 0)
+            {
+                point = CGPointMake(m_StartPoint.x, m_StartPoint.y);
+            }
             if (i+1 < self.pointSet.count)
             {
                 content = self.pointSet[i+1];
-                CGPoint nextpoint = CGPointMake(m_contentStartPoint.x+([[content firstObject] floatValue]-1)*m_AsixXWidht,
-                                                start_Y-([[content lastObject] floatValue]-1)*m_AsixYHeight);
+                asixX = [[content firstObject] floatValue]/[[_dataX firstObject] floatValue] - 1;
+                asixY = [[content lastObject] floatValue]/[[_dataY firstObject] floatValue] - 1;
+                CGPoint nextpoint = CGPointMake(m_contentStartPoint.x+asixX*m_AsixXWidht,start_Y-asixY*m_AsixYHeight);
                 [_AimsPoints addObject:@[[NSValue valueWithCGPoint:point], [NSValue valueWithCGPoint:nextpoint]]];
             }
         }
-
-    }    return _AimsPoints;
+        
+    }
+    return _AimsPoints;
 }
 
 #pragma mark - Animations
@@ -348,8 +413,8 @@ const CGFloat offset_start_x = 80;
 {
     CALayer *setPoint = [[ZJLineChartShapeLayer sharedLineChartShapeLayer]
                          drawBezierRoundWithPoint:CGPointMake(point.x-6,point.y-6)
-                         Size:CGSizeMake(10, 10)
-                         LineWidth:1
+                         Size:CGSizeMake((num==0?0:10), (num==0?0:10))
+                         LineWidth:(num==0?0:1)
                          LineColor:[UIColor whiteColor]
                          BackGroundColor:[UIColor colorWithRed:0.1333 green:0.4824 blue:0.251 alpha:1.0]
                          cornerRadius:5];
